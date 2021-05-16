@@ -61,19 +61,18 @@ public class MovingRoutine : MonoBehaviour
 
     private IEnumerator Moving()
     {
-        //_myAudioSource.Play();
         while (CanMove)
         {
             Vector3 initPos = transform.position;
             Quaternion initRot = transform.rotation;
             float timer = 0.0f;
-            Point actualPoint = points[_indexPoints];
-            float timeToReach = Vector2.Distance(initPos, _initPos + actualPoint.position) / actualPoint.speedToReach;
+            Point currentPoint = points[_indexPoints];
+            float timeToReach = Vector3.Distance(initPos, _initPos + currentPoint.position) / currentPoint.speedToReach;
             while (timer < timeToReach)
             {
                 timer += Time.deltaTime;
-                transform.position = Vector3.Lerp(initPos, _initPos + actualPoint.position, timer / timeToReach);
-                transform.rotation = Quaternion.Lerp(initRot, _initRot * Quaternion.Euler(actualPoint.angle),
+                transform.position = Vector3.Lerp(initPos, _initPos + currentPoint.position, timer / timeToReach);
+                transform.rotation = Quaternion.Lerp(initRot, _initRot * Quaternion.Euler(currentPoint.angle),
                     timer / timeToReach);
                 yield return null;
             }
@@ -103,7 +102,7 @@ public class MovingRoutine : MonoBehaviour
                     throw new ArgumentOutOfRangeException();
             }
 
-            yield return new WaitForSeconds(actualPoint.timeToStop);
+            yield return new WaitForSeconds(currentPoint.timeToStop);
 
             if (numberMoves > 0)
             {

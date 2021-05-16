@@ -1,5 +1,8 @@
 //some parts of the code taken from catlikecoding
 
+//todo snap player to ground if on moving platform descending
+//todo tweak values - wip
+
 using System.Collections;
 using Gravity;
 using UnityEngine;
@@ -27,6 +30,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask layerInteractable = -1;
     [SerializeField] private float maxTimeThrow = 3f, throwStrength = 10f;
     [SerializeField] private float fallMultiplier = 0.5f, lowJumpMultiplier = 0.5f;
+    [SerializeField] private bool enablePushbackThrow;
 
     private Rigidbody _body, _connectedBody, _previousConnectedBody;
     private Vector3 _playerInput;
@@ -214,7 +218,7 @@ public class PlayerController : MonoBehaviour
     {
         mouseSensitivity = Vector2.right * (250f + 250f * sensitivityPercent) + Vector2.up * mouseSensitivity.y;
     }
-    
+
     /// <summary>
     /// Changes sensitivity of y-axis based on a percentage, going from 500f to 1000f
     /// </summary>
@@ -223,7 +227,7 @@ public class PlayerController : MonoBehaviour
     {
         mouseSensitivity = Vector2.up * (250f + 250f * sensitivityPercent) + Vector2.right * mouseSensitivity.x;
     }
-    
+
     #endregion
 
     #region Custom Private Functions
@@ -343,6 +347,7 @@ public class PlayerController : MonoBehaviour
             jumpSpeed = Mathf.Max(jumpSpeed - alignedSpeed, 0f);
         }
 
+        _velocity += jumpDirection * jumpSpeed;
         _velocity += jumpDirection * jumpSpeed;
     }
 
@@ -558,8 +563,12 @@ public class PlayerController : MonoBehaviour
     {
         if (_grabbedItem == null) return;
         _grabbedItem.Throw(percent * throwStrength);
-        _body.AddForce(-throwStrength * percent * cam.transform.forward.normalized);
         Drop();
+        if (enablePushbackThrow)
+        {
+            _body.AddForce(-throwStrength * percent * cam.transform.forward.normalized);
+        }
+
     }
 
     private IEnumerator Throwing(float a, float b, float speed)

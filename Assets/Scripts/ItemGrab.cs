@@ -8,22 +8,23 @@ using UnityEngine;
 public class ItemGrab : MonoBehaviour
 {
     [SerializeField] private float maxSpeedAdjustment = 10f, maxAccelerationAdjustment = 10f;
+
     //todo change that call from a string to an int or a list ;__;
     [SerializeField] private string nameLayerNoCollisionsPlayer = "Player";
     [SerializeField] private float percentTransparent = 0.5f;
-    private Rigidbody _body;
+    protected Rigidbody Body;
     private MeshRenderer[] _renderers;
     private bool _isGrabbed;
-    private CustomGravityRigidbody _customGravity;
+    protected CustomGravityRigidbody CustomGravity;
     private float _dist;
     private Transform _grabAnchor;
     private LayerMask _originLayerMask;
 
     private void Awake()
     {
-        _body = GetComponent<Rigidbody>();
+        Body = GetComponent<Rigidbody>();
         _renderers = GetComponents<MeshRenderer>();
-        _customGravity = GetComponent<CustomGravityRigidbody>();
+        CustomGravity = GetComponent<CustomGravityRigidbody>();
         _originLayerMask = gameObject.layer;
     }
 
@@ -31,13 +32,13 @@ public class ItemGrab : MonoBehaviour
     /// Grabs the object with a reference transform as an anchor
     /// </summary>
     /// <param name="anchor">the anchor</param>
-    public void Grab(Transform anchor)
+    public virtual void Grab(Transform anchor)
     {
         _grabAnchor = anchor;
         _dist = Vector3.Distance(anchor.position, transform.position);
         _isGrabbed = true;
         SwitchState();
-        _body.velocity = Vector3.zero;
+        Body.velocity = Vector3.zero;
     }
 
     /// <summary>
@@ -48,25 +49,34 @@ public class ItemGrab : MonoBehaviour
     {
         _isGrabbed = false;
         SwitchState();
-        _body.velocity += velocity;
+        Body.velocity += velocity;
     }
 
     /// <summary>
     /// Throws the object with a force being added
     /// </summary>
     /// <param name="strength">the strength applied to the object</param>
-    public void Throw(float strength)
+    public virtual void Throw(float strength)
     {
-        _body.AddForce((transform.position - _grabAnchor.position).normalized * strength);
+        Body.AddForce((transform.position - _grabAnchor.position).normalized * strength);
     }
 
     private void FixedUpdate()
     {
-        if (!_isGrabbed) return;
+        MoveUpdate();
+    }
+
+    protected void MoveUpdate()
+    {
+        if (!_isGrabbed)
+        {
+            return;
+        }
+
         Vector3 aim = _grabAnchor.forward * _dist - (transform.position - _grabAnchor.position);
 
         float maxSpeedChange = maxAccelerationAdjustment * Time.fixedDeltaTime;
-        _body.velocity = Vector3.MoveTowards(_body.velocity, aim * maxSpeedAdjustment, maxSpeedChange);
+        Body.velocity = Vector3.MoveTowards(Body.velocity, aim * maxSpeedAdjustment, maxSpeedChange);
     }
 
     private void SwitchState()
@@ -74,8 +84,8 @@ public class ItemGrab : MonoBehaviour
         gameObject.layer = LayerMask.NameToLayer(_isGrabbed
             ? nameLayerNoCollisionsPlayer
             : LayerMask.LayerToName(_originLayerMask));
-        _body.interpolation = _isGrabbed ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
-        _customGravity.EnableGravity = !_isGrabbed;
+        Body.interpolation = _isGrabbed ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
+        CustomGravity.EnableGravity = !_isGrabbed;
         foreach (var r in _renderers)
         {
             Color c = r.material.color;
